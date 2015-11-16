@@ -21,6 +21,7 @@
 typedef struct {
     void (*function)(void *);
     void *argument;
+    struct pool_task_t* next;
 } pool_task_t;
 
 
@@ -43,33 +44,30 @@ static void *thread_do_work(void *pool);
 pool_t *pool_create(int queue_size, int num_threads)
 {
    printf("creating threadpool\n");
-   int s;
+   int i;
    //need to initailize lock, condition, attr, array of threads
    pthread_mutex_t mutex;
    pthread_cond_t cond;
-   pthread_attr_t attr;
    pthread_t * thread_array = (pthread_t*) malloc(sizeof(pthread_t)*num_threads);
 
    //set values
    pool_t* threadpool = (pool_t*) malloc(sizeof(pool_t));
-
    //init pthreads
    pthread_mutex_init(&mutex,NULL);
+   threadpool->lock = mutex;
    pthread_cond_init(&cond,NULL);
-   pthread_attr_init(&attr);
+   threadpool->notify = cond;
 
-   int i;
+   threadpool->threads = thread_array;
+   printf("here\n");
    for(i=0; i < num_threads; i++){
-       s = pthread_create(&thread_array[i],&attr,thread_do_work,(void*)threadpool);
-       if (s!=0){
-         printf("error creating thread within threadpool\n");
-       }
-
+       pthread_create(&(threadpool->threads[i]),NULL,thread_do_work,(void*)threadpool);
    }
     threadpool->task_queue_size_limit = queue_size;
     threadpool->thread_count = num_threads;
-    threadpool->threads = thread_array;
+
     threadpool->queue = (pool_task_t*)malloc(sizeof(pool_task_t) * (queue_size+1));
+    //puts("return threadpool");
     return threadpool;
 }
 
@@ -89,8 +87,33 @@ int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
     }
 
     //todo: create new task
-    //todo: add task to queue in threadpool
+    pool_task_t* task = (pool_task_t*) malloc(sizeof(pool_task_t));
+    task->function = function;
+    task->argument = argument;
+    task->next = NULL;
 
+    if(pool->queue){
+      //queue not empty
+      pool_task_t* current = pool->queue;
+      //todo: basic linked list traversals
+      while(current->next != NULL)
+        current = (pool_task_t*)current->next;
+
+      current->next = (struct pool_task_t*) task;
+    }else{
+      //queue is empty
+      pool->queue = task;
+    }
+
+    err = pthread_cond_broadcast(&(pool->notify));
+    if(err){
+      // err in broadcoasting condition
+      return -1;
+    }
+    err = pthread_mutex_unlock(lock);
+    if(err)
+      //error in unlocking the lock
+      return -1;
 
 
     return err;
@@ -131,6 +154,30 @@ static void *thread_do_work(void *pool)
 {
 
     while(1) {
+      pool_t* threadpool = (pool_t*) pool;
+      pthread_mutex_t* lock = &(threadpool->lock);
+      pthread_cond_t* cond = &(threadpool->notify);
+      //check for errors in lock, condition
+      pool_task_t* current = threadpool->queue;
+      if(!current){
+        pthread_mutex_unlock(lock);
+      }
+
+      if(current->function == NULL){
+        pthread_mutex_unlock(&(threadpool->lock));
+        pthread_exit(NULL);
+        return NULL;
+      }
+      //delete from LL
+      threadpool->queue = threadpool->queue->next;
+
+      //idk whats goin on here
+      void (*function)(void*);
+      void* argument;
+      function = current->function;
+      argument = current->argument;
+      free ((void*)current);
+      function(argument);
 
     }
 

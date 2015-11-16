@@ -27,6 +27,7 @@ void* handle_request(void*);
 int listenfd;
 
 // TODO: Declare your threadpool!
+pool_t* threadpool;
 
 int main(int argc,char *argv[])
 {
@@ -84,7 +85,7 @@ int main(int argc,char *argv[])
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
-
+    threadpool = pool_create(10,1000);
     // This while loop "forever", handling incoming connections
     while(1)
     {
@@ -104,8 +105,7 @@ int main(int argc,char *argv[])
         // process_request(connfd, &req);
         // close(connfd);
 
-        pthread_t thread;
-        pthread_create(&thread, NULL, (void*) handle_request, (void*) connfd);
+        while(pool_add_task(threadpool,(void*)handle_request,(void*)connfd));
     }
 }
 
@@ -124,7 +124,7 @@ void shutdown_server(int signo){
     printf("Shutting down the server...\n");
 
     // TODO: Teardown your threadpool
-
+    pool_destroy(threadpool);
     // TODO: Print stats about your ability to handle requests.
     unload_seats();
     close(listenfd);
