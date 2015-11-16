@@ -11,6 +11,8 @@
 #include <stdbool.h>
 #include <errno.h>
 
+#include <pthread.h>
+
 #include "thread_pool.h"
 #include "seats.h"
 #include "util.h"
@@ -19,6 +21,8 @@
 #define FILENAMESIZE 100
 
 void shutdown_server(int);
+void* handle_request(void*);
+
 
 int listenfd;
 
@@ -27,27 +31,27 @@ int listenfd;
 int main(int argc,char *argv[])
 {
     int flag, num_seats = 20;
-    int connfd = 0;
+    long connfd = 0; //int connfd = 0;
     struct sockaddr_in serv_addr;
 
     char send_buffer[BUFSIZE];
-    
-    listenfd = 0; 
+
+    listenfd = 0;
 
     int server_port = 8080;
 
     if (argc > 1)
     {
         num_seats = atoi(argv[1]);
-    } 
+    }
 
     if (server_port < 1500)
     {
         fprintf(stderr,"INVALID PORT NUMBER: %d; can't be < 1500\n",server_port);
         exit(-1);
     }
-    
-    if (signal(SIGINT, shutdown_server) == SIG_ERR) 
+
+    if (signal(SIGINT, shutdown_server) == SIG_ERR)
         printf("Issue registering SIGINT handler");
 
     listenfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -62,7 +66,7 @@ int main(int argc,char *argv[])
     // Load the seats;
     load_seats(num_seats);
 
-    // set server address 
+    // set server address
     memset(&serv_addr, '0', sizeof(serv_addr));
     memset(send_buffer, '0', sizeof(send_buffer));
     serv_addr.sin_family = AF_INET;
@@ -88,25 +92,37 @@ int main(int argc,char *argv[])
 
         /*********************************************************************
             You should not need to modify any of the code above this comment.
-            However, you will need to add lines to declare and initialize your 
+            However, you will need to add lines to declare and initialize your
             threadpool!
 
             The lines below will need to be modified! Some may need to be moved
             to other locations when you make your server multithreaded.
         *********************************************************************/
-        
-        struct request req;
-        // parse_request fills in the req struct object
-        parse_request(connfd, &req);
-        // process_request reads the req struct and processes the command
-        process_request(connfd, &req);
-        close(connfd);
+        // struct request req;
+        //
+        // parse_request(connfd, &req);
+        // process_request(connfd, &req);
+        // close(connfd);
+
+        pthread_t thread;
+        pthread_create(&thread, NULL, (void*) handle_request, (void*) connfd);
     }
+}
+
+void* handle_request (void* connfd_origin) {
+  int connfd = (int) connfd_origin;
+  struct request req;
+
+  parse_request(connfd, &req);
+  process_request(connfd, &req);
+  close(connfd);
+
+  pthread_exit(NULL);
 }
 
 void shutdown_server(int signo){
     printf("Shutting down the server...\n");
-    
+
     // TODO: Teardown your threadpool
 
     // TODO: Print stats about your ability to handle requests.
