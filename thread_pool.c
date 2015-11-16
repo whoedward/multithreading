@@ -65,12 +65,11 @@ pool_t *pool_create(int queue_size, int num_threads)
    }
     threadpool->task_queue_size_limit = queue_size;
     threadpool->thread_count = num_threads;
-
+printf("here\n");
     threadpool->queue = (pool_task_t*)malloc(sizeof(pool_task_t) * (queue_size+1));
     //puts("return threadpool");
     return threadpool;
 }
-
 
 /*
  * Add a task to the threadpool
@@ -114,12 +113,8 @@ int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
     if(err)
       //error in unlocking the lock
       return -1;
-
-
     return err;
 }
-
-
 
 /*
  * Destroy the threadpool, free all memory, destroy treads, etc
@@ -169,7 +164,7 @@ static void *thread_do_work(void *pool)
         return NULL;
       }
       //delete from LL
-      threadpool->queue = threadpool->queue->next;
+      threadpool->queue = (pool_task_t*)threadpool->queue->next;
 
       //idk whats goin on here
       void (*function)(void*);

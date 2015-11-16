@@ -85,7 +85,7 @@ int main(int argc,char *argv[])
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
-    threadpool = pool_create(10,1000);
+    threadpool = pool_create(10,10);
     // This while loop "forever", handling incoming connections
     while(1)
     {
