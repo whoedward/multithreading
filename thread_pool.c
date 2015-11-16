@@ -15,7 +15,7 @@
  *  @var argument Argument to be passed to the function.
  */
 
-#define MAX_THREADS 20
+#define MAX_THREADS 10
 #define STANDBY_SIZE 10
 
 typedef struct {
@@ -78,10 +78,11 @@ printf("here\n");
 int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
 {
     int err = 0;
-
+    printf("addtask\n" );
     pthread_mutex_t* lock = &(pool->lock);
     err = pthread_mutex_lock(lock);
     if(err){
+      printf("error in locking mutex\n");
       return -1;
     }
 
@@ -103,16 +104,17 @@ int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
       //queue is empty
       pool->queue = task;
     }
-
-    err = pthread_cond_broadcast(&(pool->notify));
+    pthread_cond_t* condition = &(pool->notify);
+    err = pthread_cond_broadcast(condition);
     if(err){
-      // err in broadcoasting condition
+      printf("error in condition broadcoasting\n");
       return -1;
     }
     err = pthread_mutex_unlock(lock);
     if(err)
-      //error in unlocking the lock
+      printf("error in unlocking lock\n" );
       return -1;
+
     return err;
 }
 

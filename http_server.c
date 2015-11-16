@@ -85,7 +85,7 @@ int main(int argc,char *argv[])
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
-    threadpool = pool_create(10,10);
+    threadpool = pool_create(10,20);
     // This while loop "forever", handling incoming connections
     while(1)
     {
@@ -105,7 +105,8 @@ int main(int argc,char *argv[])
         // process_request(connfd, &req);
         // close(connfd);
 
-        while(pool_add_task(threadpool,(void*)handle_request,(void*)connfd));
+        pthread_t thread;
+        pthread_create(&thread, NULL, &handle_request, (void*)connfd);
     }
 }
 
