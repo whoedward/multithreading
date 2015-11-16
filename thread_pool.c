@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #include "thread_pool.h"
@@ -14,7 +15,7 @@
  *  @var argument Argument to be passed to the function.
  */
 
-#define MAX_THREADS 1
+#define MAX_THREADS 20
 #define STANDBY_SIZE 10
 
 typedef struct {
@@ -41,7 +42,35 @@ static void *thread_do_work(void *pool);
  */
 pool_t *pool_create(int queue_size, int num_threads)
 {
-    return NULL;
+   printf("creating threadpool\n");
+   int s;
+   //need to initailize lock, condition, attr, array of threads
+   pthread_mutex_t mutex;
+   pthread_cond_t cond;
+   pthread_attr_t attr;
+   pthread_t * thread_array = (pthread_t*) malloc(sizeof(pthread_t)*num_threads);
+
+   //set values
+   pool_t* threadpool = (pool_t*) malloc(sizeof(pool_t));
+
+   //init pthreads
+   pthread_mutex_init(&mutex,NULL);
+   pthread_cond_init(&cond,NULL);
+   pthread_attr_init(&attr);
+
+   int i;
+   for(i=0; i < num_threads; i++){
+       s = pthread_create(&thread_array[i],&attr,thread_do_work,(void*)threadpool);
+       if (s!=0){
+         printf("error creating thread within threadpool\n");
+       }
+
+   }
+    threadpool->task_queue_size_limit = queue_size;
+    threadpool->thread_count = num_threads;
+    threadpool->threads = thread_array;
+    threadpool->queue = (pool_task_t*)malloc(sizeof(pool_task_t) * (queue_size+1));
+    return threadpool;
 }
 
 
@@ -52,7 +81,18 @@ pool_t *pool_create(int queue_size, int num_threads)
 int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
 {
     int err = 0;
-        
+
+    pthread_mutex_t* lock = &(pool->lock);
+    err = pthread_mutex_lock(lock);
+    if(err){
+      return -1;
+    }
+
+    //todo: create new task
+    //todo: add task to queue in threadpool
+
+
+
     return err;
 }
 
@@ -65,7 +105,19 @@ int pool_add_task(pool_t *pool, void (*function)(void *), void *argument)
 int pool_destroy(pool_t *pool)
 {
     int err = 0;
- 
+    int i;
+    pool_add_task(pool, NULL, NULL);
+
+    //join worker threads
+    for(i =0; i < pool->thread_count;i++){
+      pthread_join(pool->threads[i],NULL);
+    }
+    pthread_mutex_destroy(&pool->lock);
+    pthread_cond_destroy(&pool->notify);
+    free((void*)pool->queue);
+    free((void*)pool->threads);
+    free((void*)pool);
+
     return err;
 }
 
@@ -76,10 +128,10 @@ int pool_destroy(pool_t *pool)
  *
  */
 static void *thread_do_work(void *pool)
-{ 
+{
 
     while(1) {
-        
+
     }
 
     pthread_exit(NULL);
