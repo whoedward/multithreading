@@ -15,7 +15,7 @@
  *  @var argument Argument to be passed to the function.
  */
 
-#define MAX_THREADS 10
+#define MAX_THREADS 50
 #define STANDBY_SIZE 10
 
 typedef struct {
