@@ -80,12 +80,10 @@ int main(int argc,char *argv[])
         exit(errno);
     }
 
-    // listen for incoming requests
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
 
-    // This while loop "forever", handling incoming connections
     while(1)
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
@@ -98,11 +96,6 @@ int main(int argc,char *argv[])
             The lines below will need to be modified! Some may need to be moved
             to other locations when you make your server multithreaded.
         *********************************************************************/
-        // struct request req;
-        //
-        // parse_request(connfd, &req);
-        // process_request(connfd, &req);
-        // close(connfd);
 
         pthread_t thread;
         pthread_create(&thread, NULL, (void*) handle_request, (void*) connfd);
