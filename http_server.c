@@ -89,18 +89,9 @@ int main(int argc,char *argv[])
     while(1)
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-
-        /*********************************************************************
-            You should not need to modify any of the code above this comment.
-            However, you will need to add lines to declare and initialize your
-            threadpool!
-
-            The lines below will need to be modified! Some may need to be moved
-            to other locations when you make your server multithreaded.
-        *********************************************************************/
-
-        pthread_t thread;
-        pthread_create(&thread, NULL, &handle_request, (void*)connfd);
+        //pthread_t thread;
+        //pthread_create(&thread, NULL, (void*)handle_request, (void*)connfd);
+        pool_add_task(threadpool, (void*)handle_request, (void*)connfd);
     }
 }
 
@@ -112,13 +103,13 @@ void* handle_request (void* connfd_origin) {
   process_request(connfd, &req);
   close(connfd);
 
+  //return (void*) 0;
   pthread_exit(NULL);
 }
 
 void shutdown_server(int signo){
     printf("Shutting down the server...\n");
 
-    // TODO: Teardown your threadpool
     pool_destroy(threadpool);
     // TODO: Print stats about your ability to handle requests.
     unload_seats();
