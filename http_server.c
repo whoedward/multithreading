@@ -89,9 +89,9 @@ int main(int argc,char *argv[])
     while(1)
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-        //pthread_t thread;
-        //pthread_create(&thread, NULL, (void*)handle_request, (void*)connfd);
-        pool_add_task(threadpool, (void*)handle_request, (void*)connfd);
+        pthread_t thread;
+        pthread_create(&thread, NULL, (void*)handle_request, (void*)connfd);
+        // pool_add_task(threadpool, (void*)handle_request, (void*)connfd);
     }
 }
 
@@ -103,8 +103,9 @@ void* handle_request (void* connfd_origin) {
   process_request(connfd, &req);
   close(connfd);
 
-  //return (void*) 0;
-  pthread_exit(NULL);
+  // seems to be substantially faster
+  return (void*) 0;
+  // pthread_exit(NULL);
 }
 
 void shutdown_server(int signo){
