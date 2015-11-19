@@ -84,7 +84,7 @@ int main(int argc,char *argv[])
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
-    threadpool = pool_create(10,50);
+    // threadpool = pool_create(10,50);
     // This while loop "forever", handling incoming connections
     while(1)
     {
@@ -104,8 +104,8 @@ void* handle_request (void* connfd_origin) {
   close(connfd);
 
   // seems to be substantially faster
-  return (void*) 0;
-  // pthread_exit(NULL);
+  // return (void*) 0;
+  pthread_exit(NULL);
 }
 
 void shutdown_server(int signo){

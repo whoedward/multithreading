@@ -65,7 +65,7 @@ pool_t *pool_create(int queue_size, int num_threads)
    }
     threadpool->task_queue_size_limit = queue_size;
     threadpool->thread_count = num_threads;
-    printf("here\n");
+printf("here\n");
     threadpool->queue = (pool_task_t*)malloc(sizeof(pool_task_t) * (queue_size+1));
     //puts("return threadpool");
     return threadpool;
