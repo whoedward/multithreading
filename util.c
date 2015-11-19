@@ -38,9 +38,9 @@ void parse_request(int connfd, struct request* req)
                               "Content-type: text/html\r\n\r\n"\
                               "<html><body><h2>BAD REQUEST</h2>"\
                               "</body></html>\n";
-    
+
     get_line(connfd, buf, BUFSIZE);
-    
+
     //parse out instruction
     while( !isspace(buf[j]) && (i < sizeof(instr) - 1))
     {
@@ -91,7 +91,7 @@ void parse_request(int connfd, struct request* req)
             break;
     }
     length = i;
-    
+
     req->resource = malloc(length+1);
 
     if (length > strlen(file)) {
@@ -100,7 +100,7 @@ void parse_request(int connfd, struct request* req)
 
     strncpy(req->resource, file, length);
     req->resource[length] = 0;
-    
+
     req->seat_id = parse_int_arg(file, "seat=");
     req->user_id = parse_int_arg(file, "user=");
     req->customer_priority = parse_int_arg(file, "priority=");
@@ -109,8 +109,8 @@ void parse_request(int connfd, struct request* req)
 void process_request(int connfd, struct request* req)
 {
     char *ok_response = "HTTP/1.0 200 OK\r\n"\
-                           "Content-type: text/html\r\n\r\n";   
-    
+                           "Content-type: text/html\r\n\r\n";
+
     char *notok_response = "HTTP/1.0 404 FILE NOT FOUND\r\n"\
                             "Content-type: text/html\r\n\r\n"\
                             "<html><body bgColor=white text=black>\n"\
@@ -121,13 +121,13 @@ void process_request(int connfd, struct request* req)
     int length = strlen(req->resource);
     // Check if the request is for one of our operations
     if (strncmp(req->resource, "list_seats", length) == 0)
-    {  
+    {
         list_seats(buf, BUFSIZE);
         // send headers
         writenbytes(connfd, ok_response, strlen(ok_response));
         // send data
         writenbytes(connfd, buf, strlen(buf));
-    } 
+    }
     else if(strncmp(req->resource, "view_seat", length) == 0)
     {
         view_seat(buf, BUFSIZE, req->seat_id, req->user_id, req->customer_priority);
@@ -135,7 +135,7 @@ void process_request(int connfd, struct request* req)
         writenbytes(connfd, ok_response, strlen(ok_response));
         // send data
         writenbytes(connfd, buf, strlen(buf));
-    } 
+    }
     else if(strncmp(req->resource, "confirm", length) == 0)
     {
         confirm_seat(buf, BUFSIZE, req->seat_id, req->user_id, req->customer_priority);
@@ -158,7 +158,7 @@ void process_request(int connfd, struct request* req)
         if ((fd = open(req->resource, O_RDONLY)) == -1)
         {
             writenbytes(connfd, notok_response, strlen(notok_response));
-        } 
+        }
         else
         {
             // send headers
@@ -167,10 +167,10 @@ void process_request(int connfd, struct request* req)
             int ret;
             while ( (ret = read(fd, buf, BUFSIZE)) > 0) {
                 writenbytes(connfd, buf, ret);
-            }  
+            }
             // close file and free space
             close(fd);
-        } 
+        }
     }
     free(req->resource);
 }
@@ -196,15 +196,15 @@ int get_line(int fd, char *buf, int size)
                     //we want to then return the line
                     //readnbytes(fd, &c, 1);
                     continue;
-                } 
-                else 
+                }
+                else
                 {
                     c = '\n';
                 }
             }
             buf[i] = c;
             i++;
-        } 
+        }
         else
         {
             c = '\n';
@@ -269,7 +269,7 @@ int parse_int_arg(char* filename, char* arg)
             {
                 intarg = intarg * 10 + (int) filename[i] - (int) '0';
                 continue;
-            } 
+            }
             else
             {
                 break;

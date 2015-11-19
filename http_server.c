@@ -84,14 +84,14 @@ int main(int argc,char *argv[])
     listen(listenfd, 10);
 
     // TODO: Initialize your threadpool!
-    // threadpool = pool_create(10,50);
+    threadpool = pool_create(10,50);
     // This while loop "forever", handling incoming connections
     while(1)
     {
         connfd = accept(listenfd, (struct sockaddr*)NULL, NULL);
-        pthread_t thread;
-        pthread_create(&thread, NULL, (void*)handle_request, (void*)connfd);
-        // pool_add_task(threadpool, (void*)handle_request, (void*)connfd);
+        // pthread_t thread;
+        // pthread_create(&thread, NULL, (void*)handle_request, (void*)connfd);
+        pool_add_task(threadpool, (void*)handle_request, (void*)connfd);
     }
 }
 
